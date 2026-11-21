@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Bridge Brigade</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hurt"></div>
+<div id="frost"></div>
+<div id="flash"></div>
+<div id="floaters"></div>
+
+<!-- Boss entrance: letterbox bars and a name card over the fly-by -->
+<div id="cine">
+  <div class="cine-bar top"></div>
+  <div class="cine-bar bot"></div>
+  <div class="cine-card">
+    <div class="cine-warn">⚠ KAIJU SIGHTED ⚠</div>
+    <div class="cine-name" id="cine-name">BRINEJAW</div>
+    <div class="cine-title" id="cine-title">the Harbor Eater</div>
+  </div>
+</div>
+
+<!-- In-game heads-up display -->
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="pill" id="hud-level">LEVEL 1</div>
+    <div class="progress">
+      <div class="progress-fill" id="hud-progress"></div>
+      <div class="progress-boss">☠</div>
+    </div>
+    <div class="pill coin"><span class="coin-ico"></span><b id="hud-coins">0</b></div>
+    <button class="icon-btn" id="btn-pause" aria-label="Pause">❚❚</button>
+  </div>
+  <div id="hud-buffs"></div>
+  <div id="combo">
+    <b id="combo-n">×0</b>
+    <span id="combo-l">COMBO</span>
+    <div class="combo-track"><i id="combo-bar"></i></div>
+  </div>
+  <div id="boss-bar" class="hidden">
+    <div class="boss-name" id="boss-name">☠ KAIJU ☠</div>
+    <div class="boss-track"><div id="boss-fill"></div><i class="boss-half"></i></div>
+  </div>
+  <div id="banner"></div>
+  <div id="squad-badge">4</div>
+  <div id="hint">◀ drag or move the mouse to steer ▶</div>
+</div>
+
+<!-- Main menu + upgrade shop -->
+<section id="menu" class="screen hidden">
+  <div class="menu-top">
+    <div class="toggles">
+      <button class="icon-btn" id="btn-sfx" aria-label="Sound effects">🔊</button>
+      <button class="icon-btn" id="btn-music" aria-label="Music">🎵</button>
+      <button class="icon-btn" id="btn-fx" aria-label="Glow effects" title="Glow effects">✨</button>
+    </div>
+    <div class="wallet">
+      <div class="pill star big" title="Stars earned"><span class="star-ico">★</span><b id="menu-stars">0</b></div>
+      <div class="pill coin big"><span class="coin-ico"></span><b id="menu-coins">0</b></div>
+    </div>
+  </div>
+  <div class="menu-head">
+    <h1 class="title">BRIDGE<br><span>BRIGADE</span></h1>
+    <p class="tagline">Grow the squad. Hold the bridge. Slay the kaiju.</p>
+  </div>
+  <div class="menu-bottom">
+    <div class="upgrades" id="upgrades"></div>
+    <div class="picker">
+      <button class="icon-btn pick" id="btn-prev" aria-label="Previous level">◀</button>
+      <button class="btn play" id="btn-play">PLAY<small id="play-level">LEVEL 1</small></button>
+      <button class="icon-btn pick" id="btn-fwd" aria-label="Next level">▶</button>
+    </div>
+    <div class="lvl-meta"><span id="lvl-biome">SUNNY STRAIT</span><span class="lvl-stars" id="lvl-stars">☆☆☆</span></div>
+    <p class="howto">Blue gates grow your squad · red gates shrink it · shoot barrels for power-ups</p>
+    <button class="link" id="btn-reset">reset progress</button>
+    <!-- "dev" in a checkout; the release workflow stamps the tag (v1.2.3) into the packaged copy -->
+    <span class="version" id="version">dev</span>
+  </div>
+</section>
+
+<section id="pause" class="screen dim hidden">
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <button class="btn" id="btn-resume">RESUME</button>
+    <button class="btn alt" id="btn-restart">RESTART</button>
+    <button class="btn alt" id="btn-quit">MENU</button>
+  </div>
+</section>
+
+<section id="result" class="screen dim hidden">
+  <div class="panel">
+    <h2 id="res-title">VICTORY!</h2>
+    <div class="res-stars" id="res-stars"><span>★</span><span>★</span><span>★</span></div>
+    <p id="res-sub"></p>
+    <div class="stats">
+      <div><span>Kills</span><b id="res-kills">0</b></div>
+      <div><span>Best combo</span><b id="res-combo">0</b></div>
+      <div><span>Survivors</span><b id="res-surv">0</b></div>
+      <div><span>Peak squad</span><b id="res-peak">0</b></div>
+      <div class="total"><span>Coins earned</span><b id="res-coins">0</b></div>
+    </div>
+    <button class="btn play" id="btn-next">NEXT LEVEL</button>
+    <button class="btn alt" id="btn-menu">UPGRADES</button>
+  </div>
+</section>
+
+<div id="fatal" class="hidden">
+  <div>
+    <h2>Couldn't load the 3D engine</h2>
+    <p>The file <code>js/vendor/three.min.js</code> is missing or failed to load.<br>Make sure the whole game folder was copied, then reload.</p>
+  </div>
+</div>
+
+<!-- three.js r149 (MIT), kept in the project so the game runs with no network at all. -->
+<script src="js/vendor/three.min.js"></script>
+<script src="js/util.js"></script>
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/post.js"></script>
+<script src="js/world.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

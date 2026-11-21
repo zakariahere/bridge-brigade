@@ -1,0 +1,77 @@
+# Push a tag like v1.2.0 and this publishes a GitHub Release with the playable game as a zip.
+#
+#   git tag v1.2.0
+#   git push origin v1.2.0
+#
+# "Run workflow" in the Actions tab does a dry run instead: it checks and packages the game and
+# keeps the zip as a build artifact, but publishes nothing.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Work out the version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            # Only plain semver tags are released: v1.2.3 or v1.2.3-beta.1
+            if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+              echo "::error::Tag '$GITHUB_REF_NAME' is not a version like v1.2.3"
+              exit 1
+            fi
+            echo "VERSION=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=dev-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Check every script parses
+        run: |
+          for f in js/*.js serve.js .dev/autopilot.js; do
+            node --check "$f"
+          done
+
+      - name: Package the game
+        run: |
+          mkdir -p dist/bridge-brigade
+          cp -r index.html style.css serve.js js dist/bridge-brigade/
+          if [[ -f LICENSE ]]; then cp LICENSE dist/bridge-brigade/; fi
+          {
+            echo "Bridge Brigade ${VERSION}"
+            echo
+            echo "Run:   node serve.js"
+            echo "Open:  http://localhost:8765"
+            echo
+            echo "Node only serves the folder: any static file server works, and there is nothing to install."
+            echo "https://github.com/${GITHUB_REPOSITORY}"
+          } > dist/bridge-brigade/HOW-TO-PLAY.txt
+          # the menu shows "dev" in a checkout and the real version in a release
+          sed -i "s|<span class=\"version\" id=\"version\">dev</span>|<span class=\"version\" id=\"version\">${VERSION}</span>|" dist/bridge-brigade/index.html
+          grep -q "id=\"version\">${VERSION}<" dist/bridge-brigade/index.html
+          (cd dist && zip -qr "bridge-brigade-${VERSION}.zip" bridge-brigade)
+          ls -l dist/*.zip
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bridge-brigade-${{ env.VERSION }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.zip \
+            --title "Bridge Brigade $GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag

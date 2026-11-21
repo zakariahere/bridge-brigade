@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bridge-brigade",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["serve.js"],
+      "port": 8765
+    }
+  ]
+}

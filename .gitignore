@@ -1,0 +1,11 @@
+# local-only: drafts for a blog post about the game, not part of the game itself
+blog/
+
+# build output of the release workflow
+dist/
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+.claude/settings.local.json

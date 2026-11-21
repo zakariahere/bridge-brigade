@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+
+# three.js is a vendored library: keep it out of diffs and language stats
+js/vendor/** linguist-vendored -diff
