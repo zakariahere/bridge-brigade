@@ -81,7 +81,7 @@
     const m = new THREE.InstancedMesh(geo, mat, cap);
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.frustumCulled = false;   // instances are spread far beyond the base geometry's bounds
-    m.castShadow = !!shadow;
+    m.castShadow = m.receiveShadow = !!shadow;   // what throws a shadow also takes one: the squad darkens as it runs under a tower
     if (colored) {
       const white = new THREE.Color(1, 1, 1);
       for (let i = 0; i < cap; i++) m.setColorAt(i, white);
@@ -115,14 +115,14 @@
 
   function makeKaiju(pal) {
     const g = new THREE.Group();
-    const flat = function (color) { return new THREE.MeshPhongMaterial({ color: color, flatShading: true, shininess: 8 }); };
+    const flat = function (color) { return BB.World.mat(color, { flat: true, gloss: 26, spec: 0.3 }); };   // a wet, leathery hide
     const body = flat(pal.body), belly = flat(pal.belly), spike = flat(pal.spike), bone = flat(0xf3efe2);
     spike.emissive.setRGB(pal.glow[0], pal.glow[1], pal.glow[2]);
     const eye = hdr(new THREE.MeshBasicMaterial(), pal.eye[0], pal.eye[1], pal.eye[2]);
     const mk = function (geo, mat, x, y, z, parent) {
       const m = new THREE.Mesh(geo, mat);
       m.position.set(x, y, z);
-      m.castShadow = true;
+      m.castShadow = m.receiveShadow = true;
       (parent || g).add(m);
       return m;
     };
@@ -194,7 +194,7 @@
   // A gunship drone: boxy body, four spinning rotors, a gun slung underneath.
   function makeDrone() {
     const g = new THREE.Group();
-    const dark = new THREE.MeshLambertMaterial({ color: 0x2a3340 }), trim = new THREE.MeshLambertMaterial({ color: 0x1fb5a8 });
+    const dark = BB.World.mat(0x2a3340, { gloss: 50, spec: 0.5 }), trim = BB.World.mat(0x1fb5a8, { gloss: 50, spec: 0.5 });
     const mk = function (geo, mat, x, y, z) {
       const m = new THREE.Mesh(geo, mat);
       m.position.set(x, y, z);
@@ -420,7 +420,7 @@
     const mats = [];
     let top;
     if (c.reward === 'kaiju') {
-      const side = new THREE.MeshLambertMaterial({ map: cageTexture() });
+      const side = BB.World.mat(0xffffff, { map: cageTexture(), gloss: 40, spec: 0.3 });
       mats.push(side);
       const body = new THREE.Mesh(cageGeo, [side, capMat, capMat]);
       body.position.y = 1.7;
@@ -428,11 +428,11 @@
       grp.add(body);
       top = 3.4;
     } else {
-      const m = new THREE.MeshLambertMaterial({ color: st.color });
+      const m = BB.World.mat(st.color, { gloss: 60, spec: 0.22 });   // a painted steel drum
       mats.push(m);
       const body = new THREE.Mesh(barrelGeo, m);
       body.position.y = 0.9;
-      body.castShadow = true;
+      body.castShadow = body.receiveShadow = true;
       grp.add(body);
       [0.42, 1.38].forEach(function (y) {
         const band = new THREE.Mesh(bandGeo, bandMat);
@@ -624,7 +624,7 @@
     scene = sc;
     group = new THREE.Group();
     scene.add(group);
-    const lam = function (color) { return new THREE.MeshLambertMaterial({ color: color }); };
+    const lam = function (color, gloss, spec) { return BB.World.mat(color, gloss ? { gloss: gloss, spec: spec } : null); };
     const basic = function (opts) { return new THREE.MeshBasicMaterial(opts || {}); };
     const legGeo = function () { return new THREE.BoxGeometry(0.2, 0.6, 0.22).translate(0, -0.3, 0); };  // pivot at the hip
 
@@ -632,8 +632,8 @@
     S.legs = inst(legGeo(), lam(0x2b55c8), SOLDIER_CAP * 2, true);
     S.torso = inst(new THREE.BoxGeometry(0.52, 0.56, 0.32), lam(0xd8382e), SOLDIER_CAP, true);
     S.head = inst(new THREE.SphereGeometry(0.2, 10, 8), lam(0xf2c58e), SOLDIER_CAP, true);
-    S.helmet = inst(new THREE.SphereGeometry(0.225, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), lam(0x22252e), SOLDIER_CAP, false);
-    S.gun = inst(new THREE.BoxGeometry(0.1, 0.13, 0.75), lam(0x1b1d22), SOLDIER_CAP, false);
+    S.helmet = inst(new THREE.SphereGeometry(0.225, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), lam(0x22252e, 60, 0.6), SOLDIER_CAP, false);
+    S.gun = inst(new THREE.BoxGeometry(0.1, 0.13, 0.75), lam(0x1b1d22, 40, 0.4), SOLDIER_CAP, false);
     S.arms = inst(new THREE.BoxGeometry(0.13, 0.13, 0.46).translate(0, 0, -0.2), lam(0xd8382e), SOLDIER_CAP * 2, false);
     S.pack = inst(new THREE.BoxGeometry(0.36, 0.4, 0.17), lam(0x4a5a2e), SOLDIER_CAP, false);
     S.ring = inst(new THREE.RingGeometry(0.36, 0.48, 24).rotateX(-Math.PI / 2),
@@ -685,13 +685,13 @@
 
     unitPlane = new THREE.PlaneGeometry(1, 1);
     postGeo = new THREE.BoxGeometry(0.3, 1, 0.3);
-    postGood = lam(0x2f7cf6);
-    postBad = lam(0xe5484d);
+    postGood = lam(0x2f7cf6, 40, 0.4);
+    postBad = lam(0xe5484d, 40, 0.4);
     barrelGeo = new THREE.CylinderGeometry(0.85, 0.85, 1.7, 18);
     bandGeo = new THREE.CylinderGeometry(0.9, 0.9, 0.14, 18);
-    bandMat = lam(0x23262e);
+    bandMat = lam(0x23262e, 50, 0.5);
     cageGeo = new THREE.CylinderGeometry(1.25, 1.25, 3.4, 28);
-    capMat = lam(0x2b3448);
+    capMat = lam(0x2b3448, 40, 0.3);
 
     bossK = makeKaiju({ body: 0x3c4a44, belly: 0x93a184, spike: 0x7fe9ff, glow: [0.1, 1.15, 1.6], eye: [3.4, 0.25, 0.2] });
     bossK.group.scale.setScalar(BOSS_SCALE);
