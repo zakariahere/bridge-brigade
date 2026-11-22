@@ -47,6 +47,8 @@ as a zip you can unpack and run the same way.
   the circles are, sends waves of minions, and gets angry at half health.
 - **Six biomes**, a new one every two levels, each with its own weather, sea, skyline and kaiju:
   Sunny Strait, Sunset Sound, Frostbite Bay, Midnight Crossing, Stormfront and Cinder Sea.
+- **A sea that is really there.** It mirrors the bridge, the ships and the monster, and takes
+  their shadows. Container ships and dinghies sail past, each with its own wake.
 - **Combos, stars and upgrades.** Kill streaks pay bonus coins. Coins buy five permanent upgrades.
   Each level is rated one to three stars by how much of your squad survives, and any level you have
   unlocked can be replayed from the menu.
@@ -58,12 +60,12 @@ Progress is kept in the browser's local storage.
 
 | | |
 |---|---|
-| ![A beam of fire rakes the left half of the bridge at sunset](docs/screenshots/02-breath-beam-duskmaw.png) | ![Fireballs in the air and red landing circles around the squad](docs/screenshots/03-fireball-volley.png) |
-| The breath beam. The red half of the road is where not to be. | A fireball volley. Each circle fills in as its fireball gets closer. |
-| ![A shielded squad of 140 fires into a horde on a bridge over a sea of lava](docs/screenshots/04-cinder-sea-bloaters-combo-shield.png) | ![Lightning strikes the sea beside the bridge in a storm](docs/screenshots/05-stormfront-lightning.png) |
-| Cinder Sea: glowing bloaters in the horde, a 72 kill combo, a shield dome over the squad. | Stormfront: rain, and lightning that actually hits the water. |
-| ![Victory card showing three stars and the run's stats](docs/screenshots/06-victory-stars.png) | |
-| Three stars for bringing most of the squad home. | |
+| ![A container ship passes a suspension bridge on a bright blue sea, mirrored in the water](docs/screenshots/07-sunny-strait-ship.png) | ![A beam of fire rakes the left half of the bridge at sunset](docs/screenshots/02-breath-beam-duskmaw.png) |
+| Sunny Strait. The ship is mirrored in the sea, and the bridge throws its shadow on the water. | The breath beam rakes one half of the bridge. Stand on the other half. |
+| ![A night battle with a boss, a gunship drone and two red landing circles around the squad](docs/screenshots/03-fireball-volley.png) | ![A shielded squad on a bridge over a sea of lava, with a blue kaiju fighting a horde ahead](docs/screenshots/04-cinder-sea-kaiju-ally-shield.png) |
+| A fireball volley at night. Each red circle marks where one is about to land. | Cinder Sea: a freed kaiju charges the horde for you, a 38 kill combo, a shield dome over the squad. |
+| ![A squad of 239 on a rain-slicked bridge with a container ship passing on each side](docs/screenshots/05-stormfront-container-ships.png) | ![Victory card showing three stars and the run's stats over an icy sea](docs/screenshots/06-victory-stars.png) |
+| Stormfront: rain on a wet road, and container ships passing on both sides with their lights on. | Three stars for bringing most of the squad home. |
 
 ## How it is built
 
@@ -74,13 +76,33 @@ Nothing is loaded from disk except code. The soldiers, monsters and bridge are a
 boxes, spheres and cones. Textures are drawn onto canvases at start-up. Every sound, the music
 included, is synthesised with WebAudio.
 
+### How the picture gets its depth
+
+Simple shapes only look solid if the light treats them as solid. Five things do that here:
+
+- **Light from the side.** The sun stands ahead and well to the right, so the three faces of a box
+  you can see are three different brightnesses. A cool fill light from the left keeps the shaded
+  side from going flat.
+- **Shadows on everything near the bridge**, the sea included. One shadow map covers some sixty
+  units either side and slides along with the squad in whole-texel steps, so edges never shimmer.
+- **Ambient occlusion.** The soft shade where a barrel meets the road or two containers touch is
+  worked out from the depth of each pixel alone. No model had to change to get it.
+- **A mirror in the sea.** Once a frame the scene is drawn again from a camera flipped below the
+  waterline, and the water reflects that picture, bent by its own waves.
+- **Gloss and rim.** Surfaces carry a highlight where they mirror the sun and a little sky colour
+  where they turn edge-on. Both slide as the camera moves, which the eye reads as a real surface.
+
+The menu and the boss's entrance are also shot with a shallow depth of field. Phones skip the
+mirror and use a smaller shadow map, and any machine that cannot hold its frame rate gives up the
+mirror and then the occlusion on its own.
+
 | File | What it does |
 |---|---|
 | `js/config.js` | Tunables, upgrades, enemies, biomes and the level generator. Data only. |
 | `js/game.js` | The simulation: squad, bullets, enemies, gates, barrels, boss. No rendering. |
-| `js/world.js` | Renderer, camera, sky, sea, bridge, weather and scenery. |
+| `js/world.js` | Renderer, camera, lights and shadows, sky, sea and its reflections, bridge, weather and scenery. |
 | `js/actors.js` | Everything that moves, drawn as instanced meshes. |
-| `js/post.js` | HDR bloom and the colour grade. |
+| `js/post.js` | Ambient occlusion, depth of field, HDR bloom and the colour grade. |
 | `js/audio.js` | Synthesised sound effects and music. |
 | `js/ui.js` | Menus and the HUD, as plain DOM over the canvas. |
 | `js/main.js` | Boot, the frame loop and input. |

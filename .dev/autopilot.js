@@ -7,6 +7,12 @@
   // works on its in-memory copy of the save: nothing it does is written back.
   BB.Save.save = function () {};
   BB.Save.reset = function () {};
+  // A test tab is also silent. Runs happen in the background, often many times a minute, and
+  // nobody wants that playing over their music. With init() switched off no audio device is ever
+  // opened, so every sound call returns straight away.
+  BB.Audio.setSfx(false);
+  BB.Audio.setMusic(false);
+  BB.Audio.init = function () {};
   if (!document.getElementById('test-badge')) {   // say so on screen, in case a person wanders into this tab
     const badge = document.createElement('div');
     badge.id = 'test-badge';

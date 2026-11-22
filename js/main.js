@@ -102,9 +102,28 @@
     BB.World.render(dt);
   };
 
+  // If the picture cannot keep up, the two most expensive effects are given up one at a time:
+  // first the sea's mirror image, then ambient occlusion. It is judged over 120 frames of real
+  // play, so one hitch never triggers it, and frames from a tab left in the background (very long
+  // ones) are not counted at all. 38 ms is slower than 30 frames a second, so a screen or a
+  // power-saving mode capped at 30 does not count as struggling.
+  let slow = 0, seen = 0, dropped = 0;
+  function watch(ms) {
+    if (dropped >= 2 || G.state !== 'playing' || document.hidden || ms > 200) return;
+    seen++;
+    if (ms > 38) slow++;
+    if (seen < 120) return;
+    if (slow > 72) {
+      dropped++;
+      if (dropped === 1) BB.World.mirror = false; else BB.Post.aoOn = false;
+    }
+    seen = slow = 0;
+  }
+
   let last = performance.now();
   function frame(now) {
     requestAnimationFrame(frame);
+    watch(now - last);
     const dt = Math.min(0.05, (now - last) / 1000);   // clamp so a stalled tab cannot teleport things
     last = now;
     BB.tick(dt);
